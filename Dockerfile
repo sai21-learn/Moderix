@@ -8,13 +8,15 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy code
+COPY openenv.yaml .
 COPY my_env.py .
 COPY inference.py .
 COPY graders/ ./graders/
 COPY data/ ./data/
 
-# Set environment defaults
-ENV GEMINI_MODEL_NAME=gemini-1.5-flash
-# ENV GEMINI_API_KEY=YOUR_API_KEY
+# Environment configurations (OpenEnv Hackathon required)
+ENV API_BASE_URL=""
+ENV MODEL_NAME=""
+ENV HF_TOKEN=""
 
 CMD ["python", "inference.py"]
