@@ -128,6 +128,24 @@ pytest tests/
 
 ---
 
+## ⚙️ DevOps & CI/CD Pipeline
+
+To ensure absolute reliability and security, Content Moderation OpenEnv features a production-grade DevOps pipeline:
+
+### 1. Multi-Stage Dockerfile
+- **Optimized Footprint:** We utilize a two-stage Docker build. The `builder` stage compiles all dependencies (like `sentence-transformers`) into lightweight wheel files.
+- **Hugging Face Spaces Compliant:** The final stage creates and strictly runs as a non-root `user` (UID 1000), which is a mandatory security constraint for HF Spaces.
+- **Healthchecks:** The container autonomously verifies environment integrity via a `HEALTHCHECK` before starting the inference loop.
+
+### 2. GitHub Actions CI/CD Workflow
+Every push and pull request triggers our `.github/workflows/ci.yml` pipeline:
+- Validates the `openenv.yaml` syntax automatically.
+- Installs all dependencies via `pip`.
+- Executes the `pytest` suite ensuring all task bounds and graders remain deterministic.
+- Performs a trial `docker build` to guarantee containerization won't fail upon deployment.
+
+---
+
 ## 🧩 Project Structure
 
 ```text
