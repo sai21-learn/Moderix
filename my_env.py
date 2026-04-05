@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 # Import graders
 try:
     from graders.nsfw_grader import grade_nsfw
+    from graders.reasoning_grader import grade_reasoning
     from graders.spam_grader import grade_spam
     from graders.toxicity_grader import grade_toxicity
 except ImportError:
@@ -22,6 +23,9 @@ except ImportError:
         return 0.5
 
     def grade_nsfw(content, pred, gold):
+        return 0.5
+
+    def grade_reasoning(pred, gold):
         return 0.5
 
 
@@ -39,6 +43,9 @@ class Action(BaseModel):
     """What the agent decides to do."""
 
     decision: str  # "approve", "review", "reject", "escalate"
+    violation_type: Optional[str] = (
+        "none"  # "none", "toxicity", "spam", "violence", "explicit", "adult_content"
+    )
     reasoning: str  # Why this decision
     confidence: float = 0.5  # 0.0-1.0
 
@@ -190,31 +197,57 @@ class ContentModerationEnv:
         return obs, Reward(value=reward), done, info
 
     def _grade_decision(self, action: Action, post: dict) -> float:
-        """Grade the agent's decision against gold labels across 3 tasks."""
+        """Grade the agent's decision against gold labels across 4 tasks."""
         decision = action.decision.lower()
         confidence = action.confidence
+        violation_type = (action.violation_type or "none").lower()
 
         # 1. Toxicity Grading
         # Map decision to a score (reject -> high score, approve -> low score)
-        pred_tox = 0.9 if decision in ["reject", "review"] else 0.1
+        pred_tox = (
+            0.9
+            if decision in ["reject", "review"] and violation_type == "toxicity"
+            else 0.1
+        )
+        if decision in ["reject", "review"] and violation_type == "none":
+            pred_tox = 0.9  # Fallback if agent just rejects without type
         tox_reward = grade_toxicity(
             post["content"], pred_tox, post.get("toxicity", 0.0)
         )
 
         # 2. Spam Grading
-        pred_spam = True if decision == "reject" else False
+        pred_spam = True if decision == "reject" and violation_type == "spam" else False
+        if decision == "reject" and violation_type == "none":
+            pred_spam = True  # Fallback
         spam_reward = grade_spam(post["content"], pred_spam, post.get("spam", False))
 
         # 3. NSFW Grading
-        pred_nsfw = (
-            post.get("nsfw_category", "safe") if decision == "reject" else "safe"
-        )
+        if decision == "reject" and violation_type in [
+            "violence",
+            "explicit",
+            "adult_content",
+        ]:
+            pred_nsfw = violation_type
+        elif decision == "reject" and violation_type == "nsfw":
+            pred_nsfw = post.get(
+                "nsfw_category", "safe"
+            )  # Fallback to true category if generic nsfw
+        elif decision == "reject" and violation_type == "none":
+            pred_nsfw = post.get("nsfw_category", "safe")  # Fallback
+        else:
+            pred_nsfw = "safe"
+
         nsfw_reward = grade_nsfw(
             post["content"], pred_nsfw, post.get("nsfw_category", "safe")
         )
 
+        # 4. Reasoning Quality
+        reasoning_reward = grade_reasoning(
+            action.reasoning, post.get("justification", "")
+        )
+
         # Average the rewards
-        base_reward = (tox_reward + spam_reward + nsfw_reward) / 3.0
+        base_reward = (tox_reward + spam_reward + nsfw_reward + reasoning_reward) / 4.0
 
         # Calibration bonus/penalty
         # If reward is high and confidence is high, bonus.

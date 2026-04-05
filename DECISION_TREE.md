@@ -37,7 +37,7 @@ DECISION: Real API (you have 3 days). Start here, fallback to synthetic if API f
 ## **DECISION 2: Which LLM model for baseline?**
 
 ```
-Which model should I use in inference.py?
+Which model should I use in Inference.py?
 
 ├─ OPTION A: Qwen2.5-72B-Instruct (FREE via HF Router)
 │  ├─ Cost: $0
@@ -208,8 +208,8 @@ What's the minimal test checklist?
 │  │  Check: reset() returns Observation
 │  │  Check: step(Action) returns (obs, reward, done, info)
 │  │
-│  ├─ Step 2: Test inference.py locally (5 min)
-│  │  $ HF_TOKEN=xxx python inference.py
+│  ├─ Step 2: Test Inference.py locally (5 min)
+│  │  $ HF_TOKEN=xxx python Inference.py
 │  │  Check: Produces [START], [STEP], [END] logs
 │  │  Check: Final reward is 0.0–1.0
 │  │  Check: No crashes
@@ -294,7 +294,7 @@ Hours 67–72: Buffer (for unexpected failures + final review)
 
 CRITICAL PATHS (if you run out of time):
 ├─ If stuck at hour 36:
-│  └─ Skip fancy Docker setup, just use local inference.py
+│  └─ Skip fancy Docker setup, just use local Inference.py
 │
 ├─ If stuck at hour 48:
 │  └─ Generate openenv.yaml with Antigravity, copy as-is

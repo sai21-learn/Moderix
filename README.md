@@ -31,7 +31,7 @@ The exponential growth of user-generated content has created an unsustainable bu
 git clone https://github.com/sai21-learn/Moderix
 cd Moderix
 pip install -r requirements.txt
-python inference.py
+python Inference.py
 ```
 
 *See [REQUIREMENTS.md](REQUIREMENTS.md) for detailed setup instructions.*
@@ -171,7 +171,7 @@ obs, reward, done, info = await env.step(action)
 
 ### Run Baseline
 ```bash
-python inference.py
+python Inference.py
 ```
 
 ---
@@ -192,7 +192,7 @@ python inference.py
 Moderix/
 ├── README.md               # This file
 ├── my_env.py               # Core environment
-├── inference.py            # Baseline script
+├── Inference.py            # Baseline script
 ├── Dockerfile              # Containerization
 ├── requirements.txt        # Dependencies
 ├── openenv.yaml            # OpenEnv config
@@ -350,7 +350,7 @@ print(f"Step Reward: {reward}")
 ### Run Baseline
 To verify your setup and see how the reference model performs:
 ```bash
-python inference.py
+python Inference.py
 ```
 
 ## 12. Baseline Performance
@@ -371,7 +371,7 @@ Moderix/
 ├── ARCHITECTURE.md         # Internal logic and state machine details
 ├── openenv.yaml            # OpenEnv compliance and config file
 ├── my_env.py               # Main Environment class implementation
-├── inference.py            # Baseline execution script
+├── Inference.py            # Baseline execution script
 ├── Dockerfile              # Containerization for reproducible evaluation
 ├── requirements.txt         # Python dependency list
 ├── data/
@@ -398,9 +398,9 @@ Moderix/
 | **Creativity & novelty** | 10% | ⭐⭐⭐⭐ |
 
 ## 16. Troubleshooting
-- **"inference.py hangs"**: Usually caused by an invalid or expired `HF_TOKEN`. Ensure your token has "Read" permissions for the Inference API.
+- **"Inference.py hangs"**: Usually caused by an invalid or expired `HF_TOKEN`. Ensure your token has "Read" permissions for the Inference API.
 - **"OpenEnv validation fails"**: Double-check the `openenv.yaml` file for YAML syntax errors or missing required fields like `version` or `entrypoint`.
-- **"Baseline scores too low"**: The baseline script is sensitive to prompt formatting. If using a different model than Qwen2.5, you may need to adjust the system prompt in `inference.py`.
+- **"Baseline scores too low"**: The baseline script is sensitive to prompt formatting. If using a different model than Qwen2.5, you may need to adjust the system prompt in `Inference.py`.
 - **"Docker build fails"**: Ensure you are running the command from the project root and that your local Python version matches the one specified in the `Dockerfile` (3.11+).
 
 ## 17. Contributing

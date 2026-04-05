@@ -28,6 +28,18 @@ action:
     decision:
       type: string
       enum: ["approve", "review", "reject", "escalate"]
+    violation_type:
+      type: string
+      enum:
+        [
+          "none",
+          "toxicity",
+          "spam",
+          "nsfw",
+          "violence",
+          "explicit",
+          "adult_content",
+        ]
     reasoning:
       type: string
     confidence:
@@ -45,17 +57,17 @@ tasks:
     name: Toxicity Detection
     description: Classify posts for toxic language severity
     difficulty: easy
-    
+
   - id: spam_classification
     name: Spam Classification
     description: Binary spam vs legitimate
     difficulty: medium
-    
+
   - id: nsfw_detection
     name: NSFW Detection
     description: Categorize inappropriate content
     difficulty: hard
-    
+
   - id: reasoning_quality
     name: Reasoning Quality
     description: Justification quality

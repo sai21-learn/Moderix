@@ -12,5 +12,5 @@
 - **my_env.py**: Core environment logic, episode state management.
 - **graders/**: Deterministic logic for task-specific scoring.
 - **data/training_set.json**: Curated posts with multi-task labels.
-- **inference.py**: Evaluation loop integrating LLM decision-making.
+- **Inference.py**: Evaluation loop integrating LLM decision-making.
 - **openenv.yaml**: OpenEnv compliance specification.

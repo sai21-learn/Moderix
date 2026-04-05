@@ -23,3 +23,5 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 yarl==1.23.0
 openai>=1.0.0
+
+tenacity>=8.2.0

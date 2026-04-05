@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Load .env file
 load_dotenv()
@@ -35,6 +36,7 @@ SYSTEM_PROMPT = """You are a content moderation agent. Your job is to classify a
 For each post, respond with EXACTLY this JSON format:
 {
   "decision": "approve" | "review" | "reject" | "escalate",
+  "violation_type": "none" | "toxicity" | "spam" | "nsfw" | "violence" | "explicit" | "adult_content",
   "reasoning": "Brief justification (max 100 chars)",
   "confidence": 0.5
 }
@@ -83,6 +85,7 @@ def extract_json(text: str) -> str:
     return text
 
 
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=30))
 async def get_model_response(client: AsyncOpenAI, content: str, step: int) -> dict:
     """Get moderation decision from OpenAI-compatible API."""
     try:
@@ -105,6 +108,7 @@ async def get_model_response(client: AsyncOpenAI, content: str, step: int) -> di
             parsed = json.loads(json_str)
             return {
                 "decision": parsed.get("decision", "escalate"),
+                "violation_type": parsed.get("violation_type", "none"),
                 "reasoning": parsed.get("reasoning", "No reasoning provided"),
                 "confidence": float(parsed.get("confidence", 0.5)),
             }
@@ -112,12 +116,18 @@ async def get_model_response(client: AsyncOpenAI, content: str, step: int) -> di
             print(f"[DEBUG] LLM response not JSON: {response_text[:100]}", flush=True)
             return {
                 "decision": "escalate",
+                "violation_type": "none",
                 "reasoning": "Could not parse LLM response",
                 "confidence": 0.3,
             }
     except Exception as e:
         print(f"[DEBUG] API request failed: {e}", flush=True)
-        return {"decision": "escalate", "reasoning": "API error", "confidence": 0.2}
+        return {
+            "decision": "escalate",
+            "violation_type": "none",
+            "reasoning": "API error",
+            "confidence": 0.2,
+        }
 
 
 async def main() -> None:
@@ -154,6 +164,7 @@ async def main() -> None:
             response = await get_model_response(client, current_content, step)
             action = Action(
                 decision=response["decision"],
+                violation_type=response["violation_type"],
                 reasoning=response["reasoning"][
                     :100
                 ],  # truncate reasoning just in case
@@ -175,6 +186,7 @@ async def main() -> None:
                     "content": current_content,
                     "action": {
                         "decision": action.decision,
+                        "violation_type": action.violation_type,
                         "reasoning": action.reasoning,
                         "confidence": action.confidence,
                     },
@@ -193,10 +205,6 @@ async def main() -> None:
 
             if done:
                 break
-
-            # Avoid Gemini free tier rate limit if we're using Gemini fallback
-            if "generativelanguage" in str(API_BASE_URL):
-                await asyncio.sleep(15)
 
         avg_reward = sum(rewards) / len(rewards) if rewards else 0.0
         success = avg_reward >= 0.5
