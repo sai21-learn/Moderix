@@ -29,7 +29,8 @@ RUN pip install --no-cache /wheels/*
 # Copy application code
 COPY --chown=user openenv.yaml .
 COPY --chown=user my_env.py .
-COPY --chown=user Inference.py .
+COPY --chown=user inference.py .
+COPY --chown=user app.py .
 COPY --chown=user graders/ ./graders/
 COPY --chown=user data/ ./data/
 
@@ -37,4 +38,4 @@ COPY --chown=user data/ ./data/
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD python -c "import my_env; print(1)" || exit 1
 
-CMD ["python", "Inference.py"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]

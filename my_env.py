@@ -306,6 +306,9 @@ class ContentModerationEnv:
         if decision == "approve" and is_truly_malicious and confidence > 0.8:
             final_reward = 0.0
 
+        # Apply trajectory penalty based on ruined reputation (min 0.2 to prevent total lock-out)
+        final_reward = final_reward * max(0.2, self.user_reputation)
+
         return min(max(final_reward, 0.0), 1.0)
 
     async def state(self) -> dict:
