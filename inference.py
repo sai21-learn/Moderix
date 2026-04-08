@@ -23,7 +23,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 API_KEY = OPENAI_API_KEY or HF_TOKEN
 
 SERVER_URL = os.getenv("OPENENV_SERVER_URL", "http://localhost:7860")
-TASK_NAME = "content_moderation"
+# Read TASK_ID from environment (standard for OpenEnv validators)
+TASK_NAME  = os.getenv("TASK_ID", os.getenv("TASK", "toxicity_detection"))
 BENCHMARK = "openenv_moderation"
 MAX_STEPS = 8
 # Theoretical max reward per step is 1.0 (perfect prediction across all categories)
@@ -97,7 +98,8 @@ async def main() -> None:
 
         try:
             # Episode Loop
-            r = await http.post("/reset")
+            # Pass task_id so environment can focus rewards correctly
+            r = await http.post("/reset", json={"task_id": TASK_NAME})
             obs = r.json()
             
             for step in range(1, MAX_STEPS + 1):

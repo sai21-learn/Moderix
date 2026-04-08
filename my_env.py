@@ -64,6 +64,7 @@ class ContentModerationEnv:
 
     def __init__(self, task_name: str = "content_moderation"):
         self.task_name = task_name
+        self.task_id = None # Current active task ID for pure reward
         self.current_step = 0
         self.max_steps = 8
         self.episode_rewards = []
@@ -99,8 +100,12 @@ class ContentModerationEnv:
             self.gold_labels = {}
         print("[DEBUG] Initialization complete", file=sys.stderr, flush=True)
 
-    async def reset(self) -> Observation:
+    async def reset(self, task_id: Optional[str] = None) -> Observation:
         """Initialize a new episode."""
+        if task_id:
+            self.task_id = task_id
+            print(f"[DEBUG] Environment reset with task_id: {self.task_id}", file=sys.stderr, flush=True)
+
         self.current_step = 0
         self.episode_rewards = []
         self.decisions_made = []
@@ -281,8 +286,18 @@ class ContentModerationEnv:
             action.reasoning, post.get("justification", "")
         )
 
-        # Average the rewards
-        base_reward = (tox_reward + spam_reward + nsfw_reward + reasoning_reward) / 4.0
+        # Reward Pureness Check: If a specific task is active, return ONLY its reward
+        if self.task_id == "toxicity_detection":
+            base_reward = tox_reward
+        elif self.task_id == "spam_classification":
+            base_reward = spam_reward
+        elif self.task_id == "nsfw_detection":
+            base_reward = nsfw_reward
+        elif self.task_id == "reasoning_quality":
+            base_reward = reasoning_reward
+        else:
+            # Fallback: Blended reward
+            base_reward = (tox_reward + spam_reward + nsfw_reward + reasoning_reward) / 4.0
 
         # Calibration bonus/penalty
         if base_reward > 0.7:

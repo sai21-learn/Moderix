@@ -38,13 +38,17 @@ async def health_detailed():
     """Detailed health endpoint."""
     return {"status": "healthy", "env_ready": environment is not None}
 
+class ResetRequest(BaseModel):
+    task_id: str = None
+
 @app.post("/reset")
-async def reset_env():
+async def reset_env(request: ResetRequest = None):
     """Reset the environment state for a new episode"""
     if environment is None:
         raise HTTPException(status_code=503, detail="Environment not initialized")
     try:
-        obs = await environment.reset()
+        task_id = request.task_id if request else None
+        obs = await environment.reset(task_id=task_id)
         return obs.model_dump()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
