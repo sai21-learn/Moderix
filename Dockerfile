@@ -42,9 +42,9 @@ COPY --chown=user server/  ./server/
 COPY --chown=user graders/ ./graders/
 COPY --chown=user data/    ./data/
 
-# Healthcheck
-HEALTHCHECK --interval=20s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -sf http://localhost:7860/health || exit 1
+# Healthcheck — mirrors what the validator pings (POST /reset)
+HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=5 \
+  CMD curl -sf -X POST -H "Content-Type: application/json" -d '{}' http://localhost:7860/reset || exit 1
 
 # Start FastAPI server
 CMD ["python", "-m", "server.app"]
