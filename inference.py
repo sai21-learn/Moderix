@@ -118,66 +118,81 @@ async def wait_for_server(http: httpx.AsyncClient, retries: int = 30, delay: flo
 async def main() -> None:
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
-    rewards:     List[float] = []
-    steps_taken: int         = 0
-    score:       float       = 0.0
-    success:     bool        = False
+    # Determine tasks to run: if a specific task is passed, run only that.
+    # Otherwise, run all 3 benchmark tasks so the evaluator sees them all.
+    run_specific = os.getenv("TASK_ID") or os.getenv("TASK") or os.getenv("TASK_NAME")
+    tasks_to_run = [run_specific] if run_specific else ["toxicity_detection", "spam_classification", "nsfw_detection"]
 
-    log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
-
-    async with httpx.AsyncClient(base_url=SERVER_URL, timeout=30.0) as http:
-        # ── Wait for env server ──────────────────────────────────────────────
-        server_up = await wait_for_server(http)
+    async with httpx.AsyncClient(base_url=SERVER_URL, timeout=45.0) as http:
+        # Wait for env server ONCE before looping
+        server_up = await wait_for_server(http, retries=40, delay=2.0)
         if not server_up:
             print("[DEBUG] Server did not become ready in time", flush=True)
-            log_end(success=False, steps=0, score=0.0, rewards=[])
+            for t in tasks_to_run:
+                log_start(task=t, env=BENCHMARK, model=MODEL_NAME)
+                log_end(success=False, steps=0, score=0.0, rewards=[])
             return
 
-        try:
-            # ── Reset episode ────────────────────────────────────────────────
-            r = await http.post("/reset", json={"task_id": TASK_NAME})
-            r.raise_for_status()
-            obs = r.json()
+        for current_task in tasks_to_run:
+            rewards:     List[float] = []
+            steps_taken: int         = 0
+            score:       float       = 0.0
+            success:     bool        = False
 
-            # ── Step loop ────────────────────────────────────────────────────
-            for step in range(1, MAX_STEPS + 1):
-                content = obs.get("content_text", "[no content]")
+            log_start(task=current_task, env=BENCHMARK, model=MODEL_NAME)
 
-                # Ask the LLM
-                decision = get_model_decision(client, content)
-
-                # Send action to environment
-                r = await http.post("/step", json=decision)
+            try:
+                # ── Reset episode for specific task ─────────
+                r = await http.post("/reset", json={"task_id": current_task})
                 r.raise_for_status()
-                result = r.json()
+                obs = r.json()
 
-                obs     = result.get("observation", {})
-                reward  = float(result.get("reward", 0.0))
-                done    = bool(result.get("done", False))
+                # ── Step loop ───────────────────────────────
+                for step in range(1, MAX_STEPS + 1):
+                    content = obs.get("content_text", "[no content]")
 
-                rewards.append(reward)
-                steps_taken = step
+                    # Ask the LLM
+                    decision = get_model_decision(client, content)
 
-                action_str = f"{decision.get('decision', 'unknown')}:{decision.get('violation_type', 'none')}"
-                log_step(step=step, action=action_str, reward=reward, done=done, error=None)
+                    # Send action to environment
+                    r = await http.post("/step", json=decision)
+                    r.raise_for_status()
+                    result = r.json()
 
-                if done:
-                    break
+                    obs     = result.get("observation", {})
+                    
+                    # Sometimes reward is an object {"value": 0.5}, sometimes just a float
+                    raw_reward = result.get("reward", 0.0)
+                    if isinstance(raw_reward, dict):
+                        reward = float(raw_reward.get("value", 0.0))
+                    else:
+                        reward = float(raw_reward)
+                        
+                    done    = bool(result.get("done", False))
 
-            score   = min(max(sum(rewards) / MAX_TOTAL_REWARD, 0.0), 1.0)
-            success = score >= SUCCESS_SCORE_THRESHOLD
+                    rewards.append(reward)
+                    steps_taken = step
 
-        except Exception as exc:
-            print(f"[DEBUG] Episode error: {exc}", flush=True)
-            log_step(
-                step=steps_taken + 1,
-                action="error",
-                reward=0.0,
-                done=True,
-                error=str(exc)[:200],
-            )
-        finally:
-            log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+                    action_str = f"{decision.get('decision', 'unknown')}:{decision.get('violation_type', 'none')}"
+                    log_step(step=step, action=action_str, reward=reward, done=done, error=None)
+
+                    if done:
+                        break
+
+                score   = min(max(sum(rewards) / MAX_TOTAL_REWARD, 0.0), 1.0)
+                success = score >= SUCCESS_SCORE_THRESHOLD
+
+            except Exception as exc:
+                print(f"[DEBUG] Episode error on task {current_task}: {exc}", flush=True)
+                log_step(
+                    step=steps_taken + 1,
+                    action="error",
+                    reward=0.0,
+                    done=True,
+                    error=str(exc)[:200],
+                )
+            finally:
+                log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 
 if __name__ == "__main__":
