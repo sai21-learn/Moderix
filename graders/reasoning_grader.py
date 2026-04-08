@@ -22,17 +22,14 @@ def get_model():
     global model, HAS_MODEL
     if model is None and HAS_MODEL:
         try:
-            # Suppress transformers/hf hub logs during load
             os.environ["TRANSFORMERS_VERBOSITY"] = "error"
             os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
-            
+
             from sentence_transformers import SentenceTransformer
-            
-            # Use local path if it exists (for Docker pre-loaded models)
-            local_path = os.path.join(os.environ.get("HOME", "/home/user"), ".cache/torch/sentence_transformers/all-MiniLM-L6-v2")
-            model_name = local_path if os.path.exists(local_path) else "all-MiniLM-L6-v2"
-            
-            model = SentenceTransformer(model_name)
+
+            # Check the cache directory set by our Dockerfile (SENTENCE_TRANSFORMERS_HOME).
+            # SentenceTransformer will look there automatically, so just pass the model name.
+            model = SentenceTransformer("all-MiniLM-L6-v2")
         except Exception as e:
             print(f"[WARN] Failed to load SentenceTransformer: {e}", file=sys.stderr)
             HAS_MODEL = False
