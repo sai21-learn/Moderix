@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "moderix"
+version = "1.0.0"
+description = "Autonomous content moderation agent for toxicity, spam, and NSFW detection."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    { name = "sai21-learn" }
+]
+dependencies = [
+    "pydantic>=2.12.5",
+    "python-dotenv>=1.2.2",
+    "openai>=1.0.0",
+    "tenacity>=8.2.0",
+    "sentence-transformers>=3.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio"
+]
+
+[tool.setuptools]
+py-modules = ["my_env", "inference", "app"]
+packages = ["graders"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
