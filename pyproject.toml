@@ -19,7 +19,8 @@ dependencies = [
     "tenacity>=8.2.0",
     "sentence-transformers>=3.0.0",
     "fastapi>=0.100.0",
-    "uvicorn>=0.20.0"
+    "uvicorn>=0.20.0",
+    "openenv-core>=0.2.0"
 ]
 
 [project.optional-dependencies]
@@ -28,9 +29,12 @@ dev = [
     "pytest-asyncio"
 ]
 
+[project.scripts]
+server = "server.app:main"
+
 [tool.setuptools]
-py-modules = ["my_env", "inference", "app"]
-packages = ["graders"]
+py-modules = ["my_env", "inference"]
+packages = ["graders", "server"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

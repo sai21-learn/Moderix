@@ -14,11 +14,11 @@ USER user
 
 # Set environment variables
 ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH \
-    API_BASE_URL="" \
-    MODEL_NAME="" \
-    HF_TOKEN="" \
-    OPENAI_API_KEY=""
+  PATH=/home/user/.local/bin:$PATH \
+  API_BASE_URL="" \
+  MODEL_NAME="" \
+  HF_TOKEN="" \
+  OPENAI_API_KEY=""
 
 WORKDIR $HOME/app
 
@@ -27,11 +27,9 @@ COPY --chown=user --from=builder /app/wheels /wheels
 COPY --chown=user requirements.txt .
 RUN pip install --no-cache /wheels/*
 
-# Copy application code
-COPY --chown=user openenv.yaml .
-COPY --chown=user my_env.py .
-COPY --chown=user inference.py .
-COPY --chown=user app.py .
+# Copy application code from root and server
+COPY --chown=user openenv.yaml my_env.py inference.py pyproject.toml uv.lock ./
+COPY --chown=user server/ ./server/
 COPY --chown=user graders/ ./graders/
 COPY --chown=user data/ ./data/
 
@@ -39,4 +37,5 @@ COPY --chown=user data/ ./data/
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD python -c "import my_env; print(1)" || exit 1
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
+# Start FastAPI server using the new entry point or python -m
+CMD ["python", "-m", "server.app"]
