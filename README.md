@@ -109,22 +109,28 @@ $$ Reward = \text{Accuracy} \times \text{Confidence Calibration} - \text{Economi
 
 ---
 
-## 🛠️ Installation & Setup
+---
 
-### Environment Variables
-Copy `.env.example` to `.env`.
+## 🛠️ Mandatory Submission Setup (CRITICAL)
 
-**OpenEnv Standards:**
+To pass the OpenEnv validator, you **MUST** add the following as **Secrets** in your Hugging Face Space settings (Settings > Variables and Secrets > New Secret):
+
+| Secret Name | Description | Recommended Value |
+|-------------|-------------|-------------------|
+| `HF_TOKEN` | Your Hugging Face or OpenAI API Key | `hf_xxxxxxxxxxxx` |
+| `MODEL_NAME` | The model identifier for inference | `Qwen/Qwen2.5-72B-Instruct` |
+| `API_BASE_URL` | The API endpoint for the LLM | `https://router.huggingface.co/v1` |
+
+---
+
+## 🏗️ Installation & Usage
+
+### Local Development
+Copy `.env.example` to `.env` and fill in your keys:
 ```bash
-export API_BASE_URL="https://api.openai.com/v1"
-export MODEL_NAME="gpt-4o-mini"
-export HF_TOKEN="your_openai_or_hf_token_here"
-```
-
-**Gemini Fallbacks:**
-```bash
-export GEMINI_API_KEY="your_gemini_api_key_here"
-export GEMINI_MODEL_NAME="gemini-2.5-flash"
+export API_BASE_URL="https://router.huggingface.co/v1"
+export MODEL_NAME="Qwen/Qwen2.5-72B-Instruct"
+export HF_TOKEN="your_key_here"
 ```
 
 ---

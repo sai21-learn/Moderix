@@ -76,29 +76,28 @@ class ContentModerationEnv:
 
     async def initialize(self):
         """Load gold labels and initialize."""
-        print("[DEBUG] Initializing ContentModerationEnv...", file=sys.stderr)
+        print("[DEBUG] Initializing ContentModerationEnv...", file=sys.stderr, flush=True)
         try:
             # Look for training_set.json in data/
             data_path = os.path.join(
                 os.path.dirname(__file__), "data", "training_set.json"
             )
-            print(f"[DEBUG] Attempting to load dataset from: {data_path}", file=sys.stderr)
             if not os.path.exists(data_path):
-                # Try relative if above failed
                 data_path = "data/training_set.json"
-                print(f"[DEBUG] Path doesn't exist, falling back to: {data_path}", file=sys.stderr)
 
-            with open(data_path, "r", encoding="utf-8") as f:
-                dataset = json.load(f)
-                self.gold_labels = {item["id"]: item for item in dataset}
-                print(f"[INFO] Loaded {len(self.gold_labels)} gold labels", file=sys.stderr)
-        except FileNotFoundError:
-            print("[WARN] training_set.json not found, using empty labels", file=sys.stderr)
-            self.gold_labels = {}
+            if os.path.exists(data_path):
+                print(f"[DEBUG] Loading dataset from: {data_path}", file=sys.stderr, flush=True)
+                with open(data_path, "r", encoding="utf-8") as f:
+                    dataset = json.load(f)
+                    self.gold_labels = {item["id"]: item for item in dataset}
+                    print(f"[INFO] Loaded {len(self.gold_labels)} gold labels", file=sys.stderr, flush=True)
+            else:
+                print(f"[WARN] Dataset not found at {data_path}, using empty labels", file=sys.stderr, flush=True)
+                self.gold_labels = {}
         except Exception as e:
-            print(f"[ERROR] Failed to load dataset: {e}", file=sys.stderr)
+            print(f"[ERROR] Failed to load dataset: {e}", file=sys.stderr, flush=True)
             self.gold_labels = {}
-        print("[DEBUG] Initialization complete", file=sys.stderr)
+        print("[DEBUG] Initialization complete", file=sys.stderr, flush=True)
 
     async def reset(self) -> Observation:
         """Initialize a new episode."""
