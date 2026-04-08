@@ -12,21 +12,45 @@ def grade_toxicity(content: str, predicted_score: float, gold_label_score: float
     """
     # Sigmoid accuracy: penalize distance from gold label
     distance = abs(predicted_score - gold_label_score)
-    
-    # Linear penalty up to distance=1.0
     accuracy = max(0.0, 1.0 - distance)
     
-    # Confidence bonus: if agent is confident and correct
     confidence_bonus = 0.0
     if gold_label_score > 0.5 and predicted_score > 0.5:
-        # Both say toxic
         confidence_bonus = 0.1 * min(predicted_score, gold_label_score)
     elif gold_label_score < 0.5 and predicted_score < 0.5:
-        # Both say safe
         confidence_bonus = 0.1 * (1 - max(predicted_score, gold_label_score))
     
     reward = accuracy + confidence_bonus * 0.1
     return min(max(reward, 0.0), 1.0)
+
+
+def grade(observation: dict, action: dict) -> float:
+    """
+    Standard OpenEnv grader interface for toxicity_detection task.
+
+    Args:
+        observation: dict with at least 'content_text' and 'toxicity' (gold label)
+        action:      dict with 'decision', 'violation_type', 'confidence'
+
+    Returns:
+        Reward in [0.0, 1.0]
+    """
+    content    = observation.get("content_text", "")
+    gold_score = float(observation.get("toxicity", 0.0))
+
+    decision       = action.get("decision", "approve").lower()
+    violation_type = action.get("violation_type", "none").lower()
+    confidence     = float(action.get("confidence", 0.5))
+
+    # Map decision → predicted toxicity score
+    if decision in ("reject", "ban_user") and violation_type in ("toxicity", "none"):
+        pred_score = 0.9 * confidence
+    elif decision in ("review", "escalate"):
+        pred_score = 0.5
+    else:
+        pred_score = 0.1
+
+    return grade_toxicity(content, pred_score, gold_score)
 
 if __name__ == "__main__":
     import argparse

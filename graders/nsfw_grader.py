@@ -1,36 +1,52 @@
 def grade_nsfw(content: str, predicted_category: str, gold_category: str) -> float:
     """
     Grade NSFW multi-class detection.
-    
     Categories: "safe", "violence", "explicit", "adult_content"
-    
-    Args:
-        content: Post text
-        predicted_category: Agent's prediction
-        gold_category: True label
-    
-    Returns:
-        Reward (0.0-1.0)
     """
     if predicted_category == gold_category:
-        # Perfect match
         return 1.0
-    
-    # Check if "close" (confusable categories)
     close_pairs = {
         ("violence", "explicit"),
         ("adult_content", "explicit"),
         ("safe", "violence"),
         ("safe", "explicit")
     }
-    
     if (predicted_category, gold_category) in close_pairs or \
        (gold_category, predicted_category) in close_pairs:
-        # One category off (understandable confusion)
         return 0.6
+    return 0.1
+
+
+def grade(observation: dict, action: dict) -> float:
+    """
+    Standard OpenEnv grader interface for nsfw_detection task.
+
+    Args:
+        observation: dict with 'content_text' and 'nsfw_category' (gold label)
+        action:      dict with 'decision', 'violation_type', 'confidence'
+
+    Returns:
+        Reward in [0.0, 1.0]
+    """
+    content       = observation.get("content_text", "")
+    gold_category = observation.get("nsfw_category", "safe")
+
+    decision       = action.get("decision", "approve").lower()
+    violation_type = action.get("violation_type", "none").lower()
+
+    # Map violation_type to NSFW category
+    nsfw_map = {
+        "violence":       "violence",
+        "explicit":       "explicit",
+        "adult_content":  "adult_content",
+        "nsfw":           gold_category,  # agent said nsfw but didn't specify - give benefit
+    }
+    if decision in ("reject", "ban_user"):
+        pred_category = nsfw_map.get(violation_type, "safe")
     else:
-        # Completely wrong
-        return 0.1
+        pred_category = "safe"
+
+    return grade_nsfw(content, pred_category, gold_category)
 
 if __name__ == "__main__":
     import argparse
