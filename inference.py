@@ -20,12 +20,14 @@ load_dotenv()
 from my_env import Action, ContentModerationEnv
 
 # Environment variables exactly as required by OpenEnv
-API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
-MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+HF_TOKEN = os.getenv("HF_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Strongly prefer OPENAI_API_KEY per openenv spec, fallback to HF_TOKEN or gemini
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-HF_TOKEN = os.environ.get("HF_TOKEN")
+# Optional — if you use from_docker_image():
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+
 API_KEY = OPENAI_API_KEY or HF_TOKEN
 
 # Fallbacks for Gemini if OpenEnv not fully set or user left placeholder token
@@ -170,7 +172,7 @@ async def get_model_response(client: AsyncOpenAI, content: str, step: int) -> di
 async def main() -> None:
     if not API_BASE_URL or not MODEL_NAME or not API_KEY:
         print(
-            "[ERROR] API_BASE_URL, MODEL_NAME, and HF_TOKEN environment variables must be set.",
+            "[ERROR] API_BASE_URL, MODEL_NAME, and HF_TOKEN (or OPENAI_API_KEY) environment variables must be set.",
             file=sys.stderr,
         )
         return

@@ -1,7 +1,9 @@
 name: content-moderation
 version: 1.0.0
 description: "Autonomous content moderation agent that classifies, flags, and routes social media posts across toxicity, spam, and NSFW categories."
-author: "Your Name"
+author: "sai21-learn"
+license: "MIT"
+tags: ["safety", "moderation", "trust-and-safety", "rl"]
 
 observation:
   type: object

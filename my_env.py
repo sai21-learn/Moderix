@@ -47,7 +47,7 @@ class Action(BaseModel):
 
     decision: str  # "approve", "review", "reject", "escalate", "ban_user"
     violation_type: Optional[str] = (
-        "none"  # "none", "toxicity", "spam", "violence", "explicit", "adult_content"
+        "none"  # "none", "toxicity", "spam", "nsfw", "violence", "explicit", "adult_content"
     )
     reasoning: str  # Why this decision
     confidence: float = 0.5  # 0.0-1.0

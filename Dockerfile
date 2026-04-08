@@ -17,7 +17,8 @@ ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH \
     API_BASE_URL="" \
     MODEL_NAME="" \
-    HF_TOKEN=""
+    HF_TOKEN="" \
+    OPENAI_API_KEY=""
 
 WORKDIR $HOME/app
 
