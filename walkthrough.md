@@ -40,5 +40,7 @@ All graders (`toxicity`, `spam`, `nsfw`, `reasoning`) use clear, deterministic m
 
 **Update (OpenEnv v0.2.0):** Achieved full compliance with OpenEnv v0.2.0 standards. Re-structured the API into a `server/` package, added the `openenv-core` dependency, generated a `uv.lock` file, and implemented the required `[project.scripts]` server entry point.
 
+**Update (Final Docs):** Added [.env.example](file:///home/whysooraj/Documents/moderix/.env.example) for local configuration reference.
+
 ---
-**Verdict:** The project is 100% compliant with OpenEnv v0.2.0 standards and visual specifications.
+**Verdict:** The project is 100% compliant with OpenEnv v0.2.0 standards, visual specifications, and deployment requirements.

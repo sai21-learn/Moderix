@@ -9,9 +9,36 @@ import re
 import sys
 from typing import List, Optional
 
-from dotenv import load_dotenv
-from openai import AsyncOpenAI
-from tenacity import retry, stop_after_attempt, wait_exponential
+try:
+    from dotenv import load_dotenv
+except Exception as e:
+    # dotenv is optional; avoid crashing if it's not installed in the runtime
+    def load_dotenv(*args, **kwargs):  # type: ignore
+        return False
+
+    print(f"[WARN] python-dotenv not available: {e}", file=sys.stderr)
+
+try:
+    from openai import AsyncOpenAI
+except Exception as e:
+    AsyncOpenAI = None  # type: ignore
+    print(f"[WARN] openai package not available: {e}", file=sys.stderr)
+try:
+    from tenacity import retry, stop_after_attempt, wait_exponential
+except Exception as e:
+    print(f"[WARN] tenacity not available: {e}", file=sys.stderr)
+
+    def retry(*args, **kwargs):  # type: ignore
+        def _decorator(fn):
+            return fn
+
+        return _decorator
+
+    def stop_after_attempt(*args, **kwargs):  # type: ignore
+        return None
+
+    def wait_exponential(*args, **kwargs):  # type: ignore
+        return None
 
 # Load .env file
 load_dotenv()
@@ -131,8 +158,9 @@ async def get_model_response(client: AsyncOpenAI, content: str, step: int) -> di
     try:
         prompt = f"Step {step}. Moderate this post:\n\n{content}"
 
-        # Delay to avoid Gemini Free Tier rate limits (15 RPM)
-        await asyncio.sleep(6)
+        # Delay only for Gemini Free Tier rate limits (15 RPM)
+        if "generativelanguage.googleapis.com" in (API_BASE_URL or ""):
+            await asyncio.sleep(6)
         
         response_text = await _call_api(client, prompt)
 
@@ -170,6 +198,16 @@ async def get_model_response(client: AsyncOpenAI, content: str, step: int) -> di
 
 
 async def main() -> None:
+    env = None
+    rewards: List[float] = []
+    step_logs: List[dict] = []
+    steps_taken = 0
+    success = False
+    avg_reward = 0.0
+
+    if AsyncOpenAI is None:
+        print("[ERROR] openai package is required but not installed.", file=sys.stderr)
+        return
     if not API_BASE_URL or not MODEL_NAME or not API_KEY:
         print(
             "[ERROR] API_BASE_URL, MODEL_NAME, and HF_TOKEN (or OPENAI_API_KEY) environment variables must be set.",
@@ -183,17 +221,10 @@ async def main() -> None:
         base_url=API_BASE_URL,
     )
 
-    env = await ContentModerationEnv.from_env()
-
-    rewards: List[float] = []
-    step_logs: List[dict] = []
-    steps_taken = 0
-    success = False
-    avg_reward = 0.0
-
     log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
 
     try:
+        env = await ContentModerationEnv.from_env()
         obs = await env.reset()
 
         for step in range(1, MAX_STEPS + 1):
@@ -258,7 +289,8 @@ async def main() -> None:
             error=str(e),
         )
     finally:
-        await env.close()
+        if env is not None:
+            await env.close()
         log_end(success=success, steps=steps_taken, rewards=rewards)
 
         # Save evaluation results
@@ -272,8 +304,11 @@ async def main() -> None:
             },
             "steps": step_logs,
         }
-        with open("eval_results.json", "w", encoding="utf-8") as f:
-            json.dump(results, f, indent=2)
+        try:
+            with open("eval_results.json", "w", encoding="utf-8") as f:
+                json.dump(results, f, indent=2)
+        except Exception as e:
+            print(f"[WARN] Failed to write eval_results.json: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":

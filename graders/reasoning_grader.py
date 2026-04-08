@@ -8,17 +8,22 @@ import warnings
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 warnings.filterwarnings("ignore")
 
-try:
-    import numpy as np
-    from sentence_transformers import SentenceTransformer
+# Model is lazy-loaded to avoid blocking startup
+model = None
+HAS_MODEL = True
 
-    # Load model once at module level to avoid reloading
-    # all-MiniLM-L6-v2 is ~80MB, very fast for CPU
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-    HAS_MODEL = True
-except ImportError:
-    HAS_MODEL = False
-    import difflib
+def get_model():
+    global model, HAS_MODEL
+    if model is None and HAS_MODEL:
+        try:
+            from sentence_transformers import SentenceTransformer
+            # all-MiniLM-L6-v2 is ~80MB, fast for CPU
+            # We set a larger timeout or handled error
+            model = SentenceTransformer("all-MiniLM-L6-v2")
+        except Exception as e:
+            print(f"[WARN] Failed to load SentenceTransformer: {e}", file=sys.stderr)
+            HAS_MODEL = False
+    return model
 
 
 def grade_reasoning(predicted_reasoning: str, gold_justification: str) -> float:
@@ -39,13 +44,14 @@ def grade_reasoning(predicted_reasoning: str, gold_justification: str) -> float:
     if not pred or not gold:
         return 0.1
 
-    if HAS_MODEL:
+    current_model = get_model()
+    if HAS_MODEL and current_model is not None:
         try:
+            import numpy as np
             # Compute embeddings
-            embeddings = model.encode([pred, gold])
+            embeddings = current_model.encode([pred, gold])
 
             # Compute cosine similarity
-            # embeddings are normalized by default in many ST models, but let's be safe
             norm_0 = np.linalg.norm(embeddings[0])
             norm_1 = np.linalg.norm(embeddings[1])
 
@@ -53,15 +59,13 @@ def grade_reasoning(predicted_reasoning: str, gold_justification: str) -> float:
                 return 0.1
 
             sim = np.dot(embeddings[0], embeddings[1]) / (norm_0 * norm_1)
-
-            # Semantic similarity can be negative, clip to 0-1
-            # Usually, good matches are > 0.6
             ratio = float(max(0.0, sim))
         except Exception as e:
             print(f"[WARN] Error in reasoning grader: {e}", file=sys.stderr)
             ratio = 0.0
     else:
         # Fallback to simple difflib
+        import difflib
         pred_lower = pred.lower()
         gold_lower = gold.lower()
         seq = difflib.SequenceMatcher(None, pred_lower, gold_lower)

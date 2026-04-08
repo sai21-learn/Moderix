@@ -34,8 +34,8 @@ COPY --chown=user graders/ ./graders/
 COPY --chown=user data/ ./data/
 
 # Healthcheck to verify the app can start
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD python -c "import my_env; print(1)" || exit 1
+HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:7860/ || exit 1
 
 # Start FastAPI server using the new entry point or python -m
 CMD ["python", "-m", "server.app"]
