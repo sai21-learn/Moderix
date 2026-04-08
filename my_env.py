@@ -113,11 +113,35 @@ class ContentModerationEnv:
         self.thread_history = []
 
         all_posts = list(self.gold_labels.values())
-        if len(all_posts) < 8:
-            self.current_batch = all_posts
+
+        # ── Task-specific data filtering ────────────────────────────────────
+        # Each task gets a genuinely different set of posts, creating distinct
+        # task flows rather than one shared flow with different reward formulas.
+        if self.task_id == "toxicity_detection":
+            # Task 1 (Easy): Posts that are clearly toxic or clearly safe
+            task_posts = [p for p in all_posts if p.get("toxicity", 0.0) > 0.6
+                          or p.get("toxicity", 0.0) < 0.2]
+        elif self.task_id == "spam_classification":
+            # Task 2 (Medium): Posts that are spam or legitimate
+            task_posts = [p for p in all_posts if p.get("spam") is True
+                          or p.get("toxicity", 0.5) < 0.4]
+        elif self.task_id == "nsfw_detection":
+            # Task 3 (Hard): Posts with non-safe NSFW categories
+            task_posts = [p for p in all_posts
+                          if p.get("nsfw_category", "safe") != "safe"
+                          or p.get("toxicity", 0.5) < 0.3]
         else:
-            # Pick 8 random posts for variety
-            self.current_batch = random.sample(all_posts, 8)
+            task_posts = all_posts
+
+        # Fallback: use all posts if task filter yields too few
+        if len(task_posts) < 4:
+            print(f"[WARN] Not enough task-specific posts for {self.task_id}, using all", file=sys.stderr, flush=True)
+            task_posts = all_posts
+
+        if len(task_posts) < 8:
+            self.current_batch = task_posts
+        else:
+            self.current_batch = random.sample(task_posts, 8)
 
         self.batch_index = 0
 
