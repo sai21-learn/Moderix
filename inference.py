@@ -24,8 +24,8 @@ API_KEY = OPENAI_API_KEY or HF_TOKEN
 
 SERVER_URL = os.getenv("OPENENV_SERVER_URL", "http://localhost:7860")
 # Read TASK_ID from environment (standard for OpenEnv validators)
-TASK_NAME  = os.getenv("TASK_ID", os.getenv("TASK", "toxicity_detection"))
-BENCHMARK = "openenv_moderation"
+TASK_NAME  = os.getenv("TASK_ID", os.getenv("TASK", os.getenv("TASK_NAME", "toxicity_detection")))
+BENCHMARK = "moderix"
 MAX_STEPS = 8
 # Theoretical max reward per step is 1.0 (perfect prediction across all categories)
 MAX_TOTAL_REWARD = float(MAX_STEPS)

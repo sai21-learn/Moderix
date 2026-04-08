@@ -33,11 +33,21 @@ def grade_nsfw(content: str, predicted_category: str, gold_category: str) -> flo
         return 0.1
 
 if __name__ == "__main__":
-    r1 = grade_nsfw("...", "violence", "violence")
-    print(f"Perfect: {r1}")  # 1.0
-    
-    r2 = grade_nsfw("...", "explicit", "violence")
-    print(f"One off: {r2}")  # 0.6
-    
-    r3 = grade_nsfw("...", "safe", "explicit")
-    print(f"Wrong: {r3}")  # 0.1
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--content", type=str, default="")
+    parser.add_argument("--predicted", type=str, default="safe")
+    parser.add_argument("--gold", type=str, default="safe")
+    args = parser.parse_args()
+
+    if args.content:
+        # Clinical invocation
+        print(grade_nsfw(args.content, args.predicted, args.gold))
+    else:
+        # Internal test cases
+        r1 = grade_nsfw("...", "violence", "violence")
+        print(f"Perfect: {r1}")  # 1.0
+        r2 = grade_nsfw("...", "explicit", "violence")
+        print(f"One off: {r2}")  # 0.6
+        r3 = grade_nsfw("...", "safe", "explicit")
+        print(f"Wrong: {r3}")  # 0.1

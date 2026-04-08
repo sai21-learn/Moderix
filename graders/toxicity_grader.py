@@ -29,14 +29,21 @@ def grade_toxicity(content: str, predicted_score: float, gold_label_score: float
     return min(max(reward, 0.0), 1.0)
 
 if __name__ == "__main__":
-    # Test case 1: Perfect prediction
-    r1 = grade_toxicity("bad content", 0.9, 0.9)
-    print(f"Perfect: {r1}")  # Should be ~1.0
-    
-    # Test case 2: Off by 0.2
-    r2 = grade_toxicity("bad content", 0.7, 0.9)
-    print(f"Off by 0.2: {r2}")  # Should be ~0.8
-    
-    # Test case 3: Completely wrong
-    r3 = grade_toxicity("bad content", 0.1, 0.9)
-    print(f"Wrong: {r3}")  # Should be ~0.0
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--content", type=str, default="")
+    parser.add_argument("--predicted", type=float, default=0.0)
+    parser.add_argument("--gold", type=float, default=0.0)
+    args = parser.parse_args()
+
+    if args.content:
+        # Clinical invocation
+        print(grade_toxicity(args.content, args.predicted, args.gold))
+    else:
+        # Internal test cases
+        r1 = grade_toxicity("bad content", 0.9, 0.9)
+        print(f"Perfect: {r1}")
+        r2 = grade_toxicity("bad content", 0.7, 0.9)
+        print(f"Off by 0.2: {r2}")
+        r3 = grade_toxicity("bad content", 0.1, 0.9)
+        print(f"Wrong: {r3}")

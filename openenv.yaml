@@ -1,4 +1,4 @@
-name: content-moderation
+name: moderix
 version: 1.0.0
 description: "Autonomous content moderation agent that classifies, flags, and routes social media posts across toxicity, spam, and NSFW categories."
 author: "sai21-learn"
@@ -78,9 +78,3 @@ tasks:
     description: Categorize inappropriate content
     difficulty: hard
     grader: graders/nsfw_grader.py
-
-  - id: reasoning_quality
-    name: Reasoning Quality
-    description: Justification quality
-    difficulty: medium
-    grader: graders/reasoning_grader.py
