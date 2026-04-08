@@ -11,10 +11,10 @@ from pydantic import BaseModel, Field
 
 # Import graders
 try:
-    from graders.nsfw_grader import grade_nsfw
-    from graders.reasoning_grader import grade_reasoning
-    from graders.spam_grader import grade_spam
-    from graders.toxicity_grader import grade_toxicity
+    from graders.nsfw_detection import grade_nsfw, grade as grade_nsfw_func
+    from graders.reasoning_grader import grade_reasoning, grade as grade_reasoning_func
+    from graders.spam_classification import grade_spam, grade as grade_spam_func
+    from graders.toxicity_detection import grade_toxicity, grade as grade_toxicity_func
 except ImportError:
     # Fallback to dummy graders if not available yet
     def grade_toxicity(content, pred, gold):
