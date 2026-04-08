@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775420331039,
+  "lastScanned": 1775680095080,
   "projectRoot": "/home/whysooraj/Documents/moderix",
   "techStack": {
     "languages": [
@@ -9,18 +9,30 @@
         "version": null,
         "confidence": "high",
         "markers": [
+          "pyproject.toml",
           "requirements.txt"
         ]
       }
     ],
-    "frameworks": [],
+    "frameworks": [
+      {
+        "name": "fastapi",
+        "version": null,
+        "category": "backend"
+      },
+      {
+        "name": "pytest",
+        "version": null,
+        "category": "testing"
+      }
+    ],
     "packageManager": "pip",
     "runtime": null
   },
   "build": {
     "buildCommand": null,
-    "testCommand": null,
-    "lintCommand": null,
+    "testCommand": "pytest",
+    "lintCommand": "ruff check",
     "devCommand": null,
     "scripts": {}
   },
@@ -36,7 +48,10 @@
     "mainDirectories": [
       "tests"
     ],
-    "gitBranches": null
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
   },
   "customNotes": [],
   "directoryMap": {
@@ -44,7 +59,7 @@
       "path": "__pycache__",
       "purpose": null,
       "fileCount": 4,
-      "lastAccessed": 1775420331037,
+      "lastAccessed": 1775680095076,
       "keyFiles": [
         "Inference.cpython-314.pyc",
         "inference.cpython-314.pyc",
@@ -56,7 +71,7 @@
       "path": "data",
       "purpose": "Data files",
       "fileCount": 1,
-      "lastAccessed": 1775420331038,
+      "lastAccessed": 1775680095077,
       "keyFiles": [
         "training_set.json"
       ]
@@ -65,20 +80,43 @@
       "path": "graders",
       "purpose": null,
       "fileCount": 5,
-      "lastAccessed": 1775420331038,
+      "lastAccessed": 1775680095078,
       "keyFiles": [
         "__init__.py",
-        "nsfw_grader.py",
+        "nsfw_detection.py",
         "reasoning_grader.py",
-        "spam_grader.py",
-        "toxicity_grader.py"
+        "spam_classification.py",
+        "toxicity_detection.py"
+      ]
+    },
+    "moderix.egg-info": {
+      "path": "moderix.egg-info",
+      "purpose": null,
+      "fileCount": 6,
+      "lastAccessed": 1775680095078,
+      "keyFiles": [
+        "PKG-INFO",
+        "SOURCES.txt",
+        "dependency_links.txt",
+        "entry_points.txt",
+        "requires.txt"
+      ]
+    },
+    "server": {
+      "path": "server",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1775680095079,
+      "keyFiles": [
+        "__init__.py",
+        "app.py"
       ]
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 2,
-      "lastAccessed": 1775420331038,
+      "lastAccessed": 1775680095079,
       "keyFiles": [
         "test_env.py",
         "test_graders.py"
@@ -88,7 +126,7 @@
       "path": "venv",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1775420331039,
+      "lastAccessed": 1775680095079,
       "keyFiles": [
         "pyvenv.cfg"
       ]
@@ -96,8 +134,8 @@
     "venv/bin": {
       "path": "venv/bin",
       "purpose": "Executable scripts",
-      "fileCount": 28,
-      "lastAccessed": 1775420331039,
+      "fileCount": 30,
+      "lastAccessed": 1775680095079,
       "keyFiles": [
         "Activate.ps1",
         "activate",
@@ -108,7 +146,7 @@
       "path": "venv/lib",
       "purpose": "Library code",
       "fileCount": 0,
-      "lastAccessed": 1775420331039,
+      "lastAccessed": 1775680095079,
       "keyFiles": []
     }
   },

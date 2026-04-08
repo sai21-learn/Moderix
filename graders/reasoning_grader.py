@@ -94,6 +94,21 @@ def grade_reasoning(predicted_reasoning: str, gold_justification: str) -> float:
         return 0.0
 
 
+def grade(observation: dict, action: dict) -> float:
+    """
+    Standard OpenEnv grader interface for reasoning_quality task.
+
+    Args:
+        observation: dict with 'content_text' and 'justification' (gold label)
+        action:      dict with 'decision', 'reasoning', 'confidence'
+
+    Returns:
+        Reward in [0.0, 1.0]
+    """
+    gold_justification = observation.get("justification", "")
+    predicted_reasoning = action.get("reasoning", "")
+    return grade_reasoning(predicted_reasoning, gold_justification)
+
 if __name__ == "__main__":
     r1 = grade_reasoning("Contains toxic insults targeting a group", "Toxic insults")
     print(f"Good match: {r1}")

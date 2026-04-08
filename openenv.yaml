@@ -65,16 +65,22 @@ tasks:
     name: Toxicity Detection
     description: Classify posts for toxic language severity
     difficulty: easy
-    grader: graders/toxicity_detection.py
+    grader: graders.toxicity_detection:grade
 
   - id: spam_classification
     name: Spam Classification
     description: Binary spam vs legitimate
     difficulty: medium
-    grader: graders/spam_classification.py
+    grader: graders.spam_classification:grade
 
   - id: nsfw_detection
     name: NSFW Detection
     description: Categorize inappropriate content
     difficulty: hard
-    grader: graders/nsfw_detection.py
+    grader: graders.nsfw_detection:grade
+
+  - id: reasoning_quality
+    name: Reasoning Quality
+    description: Evaluate agent justifications
+    difficulty: medium
+    grader: graders.reasoning_grader:grade

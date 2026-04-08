@@ -49,30 +49,27 @@ async def health_detailed():
 async def list_tasks():
     """
     Enumerate all available tasks with their graders.
-    Required by the OpenEnv evaluator to detect distinct tasks.
+    Returns a direct list of task objects for evaluator compliance.
     """
-    return {
-        "tasks": [
-            {
-                "id":          t.get("id"),
-                "name":        t.get("name"),
-                "description": t.get("description"),
-                "difficulty":  t.get("difficulty"),
-                "grader":      t.get("grader"),
-            }
-            for t in _TASKS
-        ],
-        "count": len(_TASKS),
-    }
+    return [
+        {
+            "id":          t.get("id"),
+            "name":        t.get("name"),
+            "description": t.get("description"),
+            "difficulty":  t.get("difficulty"),
+            "grader":      t.get("grader"),
+        }
+        for t in _TASKS
+    ]
 
 # ── Per-task grading endpoint ─────────────────────────────────────────────────
 @app.post("/grade/{task_id}")
 async def grade_task(task_id: str, observation: dict, action: dict):
     """
     Run the grader for a specific task and return the reward.
-    Allows the evaluator to verify grading logic per task.
+    Supports both file paths and module:function paths.
     """
-    import importlib.util, os
+    import importlib, importlib.util, os
 
     # Find matching task
     task = next((t for t in _TASKS if t["id"] == task_id), None)
@@ -80,14 +77,23 @@ async def grade_task(task_id: str, observation: dict, action: dict):
         raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found")
 
     grader_path = task.get("grader")
-    if not grader_path or not os.path.exists(grader_path):
-        raise HTTPException(status_code=404, detail=f"Grader '{grader_path}' not found")
+    if not grader_path:
+        raise HTTPException(status_code=404, detail=f"Grader not specified for {task_id}")
 
     try:
-        spec = importlib.util.spec_from_file_location("grader_module", grader_path)
-        mod  = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        reward = mod.grade(observation, action)
+        if ":" in grader_path:
+            # Handle module:function format
+            module_name, func_name = grader_path.split(":")
+            mod = importlib.import_module(module_name)
+            func = getattr(mod, func_name)
+            reward = func(observation, action)
+        else:
+            # Handle file path format
+            spec = importlib.util.spec_from_file_location("grader_module", grader_path)
+            mod  = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            reward = mod.grade(observation, action)
+        
         return {"task_id": task_id, "reward": float(reward)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -117,7 +123,7 @@ async def step_env(action: my_env.Action):
         obs, reward, done, info = await environment.step(action)
         return {
             "observation": obs.model_dump(),
-            "reward":      reward.model_dump(),
+            "reward":      float(reward),
             "done":        done,
             "info":        info,
         }

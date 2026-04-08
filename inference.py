@@ -152,7 +152,7 @@ async def main() -> None:
                 result = r.json()
 
                 obs     = result.get("observation", {})
-                reward  = float(result.get("reward", {}).get("value", 0.0))
+                reward  = float(result.get("reward", 0.0))
                 done    = bool(result.get("done", False))
 
                 rewards.append(reward)

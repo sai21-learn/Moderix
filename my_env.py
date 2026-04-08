@@ -130,6 +130,9 @@ class ContentModerationEnv:
             task_posts = [p for p in all_posts
                           if p.get("nsfw_category", "safe") != "safe"
                           or p.get("toxicity", 0.5) < 0.3]
+        elif self.task_id == "reasoning_quality":
+            # Task 4 (Medium): Focus on posts with justifications for testing reasoning
+            task_posts = [p for p in all_posts if p.get("justification")]
         else:
             task_posts = all_posts
 
@@ -192,8 +195,8 @@ class ContentModerationEnv:
             )
 
         # Grade this decision against gold labels
-        reward = self._grade_decision(action, current_post)
-        self.episode_rewards.append(reward)
+        reward_value = self._grade_decision(action, current_post)
+        self.episode_rewards.append(reward_value)
         self.decisions_made.append(action.decision)
 
         # Update thread history
@@ -240,7 +243,7 @@ class ContentModerationEnv:
             "reasoning": action.reasoning[:50],  # truncate for logging
         }
 
-        return obs, Reward(value=reward), done, info
+        return obs, float(reward_value), done, info
 
     def _grade_decision(self, action: Action, post: dict) -> float:
         """Grade the agent's decision against gold labels across 4 tasks."""
