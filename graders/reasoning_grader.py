@@ -1,12 +1,18 @@
 import sys
 import os
 import logging
+# Absolute suppression of all noisy AI logs
+logging.getLogger("transformers").setLevel(logging.ERROR)
 logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
-import warnings
+logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
-# Suppress HuggingFace warnings
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+import warnings
 warnings.filterwarnings("ignore")
+
+# Suppress HuggingFace warnings and force offline if model is pre-loaded
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
 
 # Model is lazy-loaded to avoid blocking startup
 model = None
@@ -16,10 +22,17 @@ def get_model():
     global model, HAS_MODEL
     if model is None and HAS_MODEL:
         try:
+            # Suppress transformers/hf hub logs during load
+            os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+            os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+            
             from sentence_transformers import SentenceTransformer
-            # all-MiniLM-L6-v2 is ~80MB, fast for CPU
-            # We set a larger timeout or handled error
-            model = SentenceTransformer("all-MiniLM-L6-v2")
+            
+            # Use local path if it exists (for Docker pre-loaded models)
+            local_path = os.path.join(os.environ.get("HOME", "/home/user"), ".cache/torch/sentence_transformers/all-MiniLM-L6-v2")
+            model_name = local_path if os.path.exists(local_path) else "all-MiniLM-L6-v2"
+            
+            model = SentenceTransformer(model_name)
         except Exception as e:
             print(f"[WARN] Failed to load SentenceTransformer: {e}", file=sys.stderr)
             HAS_MODEL = False
