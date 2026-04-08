@@ -1,3 +1,15 @@
+---
+title: Moderix
+emoji: 🛡️
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+tags:
+  - openenv
+---
+
 # Content Moderation OpenEnv 🚀🏆
 
 ## Autonomous AI Agents for Scalable Trust & Safety
