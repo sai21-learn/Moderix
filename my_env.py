@@ -195,7 +195,7 @@ class ContentModerationEnv:
             )
 
         # Grade this decision against gold labels
-        reward_value = self._grade_decision(action, current_post)
+        reward_value, economic_metric = self._grade_decision(action, current_post)
         self.episode_rewards.append(reward_value)
         self.decisions_made.append(action.decision)
 
@@ -241,12 +241,13 @@ class ContentModerationEnv:
             "cumulative_reward": sum(self.episode_rewards),
             "decision": action.decision,
             "reasoning": action.reasoning[:50],  # truncate for logging
+            "economic_impact": economic_metric,
         }
 
         return obs, float(reward_value), done, info
 
-    def _grade_decision(self, action: Action, post: dict) -> float:
-        """Grade the agent's decision against gold labels across 4 tasks."""
+    def _grade_decision(self, action: Action, post: dict) -> tuple[float, str]:
+        """Grade the agent's decision against gold labels across tasks."""
         decision = action.decision.lower()
         confidence = action.confidence
         violation_type = (action.violation_type or "none").lower()
@@ -332,25 +333,35 @@ class ContentModerationEnv:
         else:
             final_reward = base_reward * (1.2 - 0.2 * confidence)
 
+        economic_string = "Standard Operation: $0.00"
+
         # Economic / Edge-case penalties
         if decision == "review":
             final_reward -= 0.1  # Cost of human review
+            economic_string = "Operational cost: $0.10 (Human Review Required)"
         elif decision == "escalate":
             final_reward -= 0.2  # Cost of legal escalation
+            economic_string = "Operational cost: $5.00 (Legal Escalation)"
 
         # Banning innocent users is catastrophic
-        if decision == "ban_user" and not is_truly_malicious:
-            final_reward = 0.0  # Zero out reward for false bans
-            self.user_reputation = 0.0  # Break trust
+        if decision == "ban_user":
+            if not is_truly_malicious:
+                final_reward = 0.0  # Zero out reward for false bans
+                self.user_reputation = 0.0  # Break trust
+                economic_string = "Catastrophic loss: -$1,000 (False User Ban Liability)"
+            else:
+                economic_string = "Cost avoided: $500 (Correct Malicious Ban)"
 
         # Approving highly toxic/adversarial content is catastrophic
-        if decision == "approve" and is_truly_malicious and confidence > 0.8:
-            final_reward = 0.0
+        if decision == "approve" and is_truly_malicious:
+            if confidence > 0.8:
+                final_reward = 0.0
+            economic_string = "Brand damage: -$2,000 (Approved Malicious Content)"
 
         # Apply trajectory penalty based on ruined reputation (min 0.2 to prevent total lock-out)
-        final_reward = final_reward * max(0.2, self.user_reputation)
+        final_reward = max(0.0, final_reward * max(0.2, self.user_reputation))
 
-        return min(max(final_reward, 0.0), 1.0)
+        return min(max(final_reward, 0.0), 1.0), economic_string
 
     async def state(self) -> dict:
         """Return current episode state."""

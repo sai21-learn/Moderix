@@ -182,10 +182,10 @@ Moderix/
 ├── data/
 │   └── training_set.json   # Curated dataset (includes Adversarial Injections)
 └── graders/
-    ├── toxicity_grader.py  
-    ├── spam_grader.py      
-    ├── nsfw_grader.py      
-    └── reasoning_grader.py # Contains all-MiniLM-L6-v2 Semantic Evaluator
+    ├── toxicity_detection.py  
+    ├── spam_classification.py      
+    ├── nsfw_detection.py      
+    └── reasoning_grader.py # (Future Expansion) Contains all-MiniLM-L6 Semantic Evaluator
 ```
 
 ## 🙏 Acknowledgments
