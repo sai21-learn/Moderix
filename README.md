@@ -188,6 +188,26 @@ Moderix/
     └── reasoning_grader.py # (Future Expansion) Contains all-MiniLM-L6 Semantic Evaluator
 ```
 
+## 🚀 Enterprise MLOps & Future Architecture Roadmap
+
+To transition Moderix from a standalone grading sandbox into an enterprise-grade reinforcement learning curriculum for frontier models, the following architectural improvements reflect standard Senior MLOps/DevOps practices:
+
+### 1. Data Version Control (DVC) for Adversarial Drift
+- **Method:** Store `training_set.json` via **DVC (Data Version Control)** linked to an S3/GCS bucket, rather than directly in Git.
+- **Why:** In production trust & safety, adversarial tactics (like prompt injection) evolve daily. DVC allows us to version datasets identically to code. RL models can be tested against specific *versions* of the data (e.g., `v2.4-adversarial_surge`) to benchmark resilience over time without bloating the git history.
+
+### 2. Distributed Episode Rollouts (Ray & Kubernetes)
+- **Method:** Wrap the OpenEnv server logic and inference loop using **Ray RLlib**, deployed horizontally via a Kubernetes Helm Chart.
+- **Why:** A strict linear `inference.py` loop bottlenecks training. For serious PPO or DPO (Direct Preference Optimization) training, we need to span 100+ concurrent environment threads. Ray allows us to parallelize the state tracking, drastically accelerating the agent's learning curve.
+
+### 3. Experiment Traceability (Weights & Biases / MLflow)
+- **Method:** Instrument the `log_step` and `log_end` functions to push metrics directly to **W&B** or **MLflow**.
+- **Why:** Relying on stdout logs is fragile. Pushing structured JSON to W&B provides real-time dashboards mapping the agent's *Economic Cost* and *Confidence Calibration* across epochs, enabling hyperparameter tuning for the Reward Function boundaries.
+
+### 4. Active Human-in-the-Loop (RLHF) Pipeline
+- **Method:** Expose a secondary moderation dashboard hooked directly to a PostgreSQL database. When the agent's certainty is low ($0.3 < conf < 0.6$), the environment suspends the `step` and queues the observation for human review.
+- **Why:** The current environment relies entirely on static gold-labels. Implementing an active RLHF pipeline ensures the environment's reward mechanism dynamically adapts to edge cases that humans decide on the fly.
+
 ## 🙏 Acknowledgments
 - Thanks to the OpenEnv Community.
 - HuggingFace for model hosting and SentenceTransformers integration.
